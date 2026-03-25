@@ -30,10 +30,12 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@prisma/client": "^6.2.1"
+    "@prisma/client": "^6.2.1",
+    "argon2": "^0.41.1"
   },
   "devDependencies": {
     "@depan-express/tsconfig": "workspace:*",
+    "@types/node": "^25.5.0",
     "prisma": "^6.2.1",
     "tsup": "^8.3.5",
     "tsx": "^4.19.2",

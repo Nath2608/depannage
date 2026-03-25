@@ -1,7 +1,24 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '@common/prisma/prisma.service';
-import { ServiceRequestStatus, UrgencyType, TradeType, JobStatus, AssignmentStatus } from '@depan-express/database';
-import { calculateDistance, estimateETA } from '@depan-express/utils';
+import { ServiceRequestStatus, UrgencyType, TradeType, AssignmentStatus } from '@depan-express/types';
+
+// Utility functions (inline since @depan-express/utils doesn't exist)
+function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  const R = 6371e3; // Earth's radius in meters
+  const φ1 = (lat1 * Math.PI) / 180;
+  const φ2 = (lat2 * Math.PI) / 180;
+  const Δφ = ((lat2 - lat1) * Math.PI) / 180;
+  const Δλ = ((lon2 - lon1) * Math.PI) / 180;
+  const a = Math.sin(Δφ / 2) ** 2 + Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) ** 2;
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+}
+
+function estimateETA(distanceInMeters: number): number {
+  const avgSpeedKmh = 30; // Average urban speed
+  const distanceKm = distanceInMeters / 1000;
+  return Math.round((distanceKm / avgSpeedKmh) * 60);
+}
 
 interface CreateServiceRequestDto {
   requestedTrade: TradeType;
@@ -42,14 +59,14 @@ export class ServiceRequestsService {
     const request = await this.prisma.serviceRequest.create({
       data: {
         customerId,
-        requestedTrade: dto.requestedTrade,
-        problemCategory: dto.problemCategory,
-        urgencyType: dto.urgencyType,
+        requestedTrade: dto.requestedTrade as any,
+        problemCategory: dto.problemCategory as any,
+        urgencyType: dto.urgencyType as any,
         scheduledFor: dto.scheduledFor,
         addressId: dto.addressId,
         description: dto.description,
         accessNotes: dto.accessNotes,
-        status: ServiceRequestStatus.SUBMITTED,
+        status: ServiceRequestStatus.SUBMITTED as any,
         estimatedPriceMin: estimate.priceMin,
         estimatedPriceMax: estimate.priceMax,
         estimatedEtaMinutes: estimate.etaMinutes,
@@ -137,12 +154,12 @@ export class ServiceRequestsService {
     // Update status
     await this.prisma.serviceRequest.update({
       where: { id: requestId },
-      data: { status: ServiceRequestStatus.SEARCHING },
+      data: { status: ServiceRequestStatus.SEARCHING as any },
     });
 
     // Find available professionals
     const availablePros = await this.findAvailableProfessionals(
-      request.requestedTrade,
+      request.requestedTrade as TradeType,
       Number(request.address.latitude),
       Number(request.address.longitude),
       request.urgencyType === UrgencyType.EMERGENCY,
@@ -151,7 +168,7 @@ export class ServiceRequestsService {
     if (availablePros.length === 0) {
       await this.prisma.serviceRequest.update({
         where: { id: requestId },
-        data: { status: ServiceRequestStatus.NO_PROFESSIONAL_AVAILABLE },
+        data: { status: ServiceRequestStatus.NO_PROFESSIONAL_AVAILABLE as any },
       });
       return null;
     }
@@ -310,16 +327,16 @@ export class ServiceRequestsService {
       ServiceRequestStatus.DRAFT,
       ServiceRequestStatus.SUBMITTED,
       ServiceRequestStatus.SEARCHING,
-    ];
+    ] as string[];
 
-    if (!cancellableStatuses.includes(request.status)) {
+    if (!cancellableStatuses.includes(request.status as string)) {
       throw new BadRequestException('Cette demande ne peut plus être annulée');
     }
 
     await this.prisma.serviceRequest.update({
       where: { id },
       data: {
-        status: ServiceRequestStatus.CANCELLED_BY_CUSTOMER,
+        status: ServiceRequestStatus.CANCELLED_BY_CUSTOMER as any,
         cancelledAt: new Date(),
       },
     });

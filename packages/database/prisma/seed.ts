@@ -16,13 +16,13 @@ import {
   PaymentProvider,
   Currency,
 } from '@prisma/client';
-import * as crypto from 'crypto';
+import * as argon2 from 'argon2';
 
 const prisma = new PrismaClient();
 
-// Simple password hash for development (use Argon2id in production)
-function hashPassword(password: string): string {
-  return crypto.createHash('sha256').update(password).digest('hex');
+// Password hash using Argon2id (production-ready)
+async function hashPassword(password: string): Promise<string> {
+  return argon2.hash(password, { type: argon2.argon2id });
 }
 
 async function main() {
@@ -67,7 +67,7 @@ async function main() {
     data: {
       email: 'admin@depan-express.fr',
       phone: '+33600000001',
-      passwordHash: hashPassword('Admin123!'),
+      passwordHash: await hashPassword('Admin123!'),
       role: UserRole.ADMIN,
       status: UserStatus.ACTIVE,
       isEmailVerified: true,
@@ -81,7 +81,7 @@ async function main() {
     data: {
       email: 'support@depan-express.fr',
       phone: '+33600000002',
-      passwordHash: hashPassword('Support123!'),
+      passwordHash: await hashPassword('Support123!'),
       role: UserRole.SUPPORT,
       status: UserStatus.ACTIVE,
       isEmailVerified: true,
@@ -91,12 +91,13 @@ async function main() {
   console.log('👤 Created support user:', supportUser.email);
 
   // Create Customer users
+  const customerPassword = await hashPassword('Customer123!');
   const customers = await Promise.all([
     prisma.user.create({
       data: {
         email: 'jean.dupont@email.com',
         phone: '+33612345678',
-        passwordHash: hashPassword('Customer123!'),
+        passwordHash: customerPassword,
         role: UserRole.CUSTOMER,
         status: UserStatus.ACTIVE,
         isEmailVerified: true,
@@ -118,7 +119,7 @@ async function main() {
       data: {
         email: 'marie.martin@email.com',
         phone: '+33687654321',
-        passwordHash: hashPassword('Customer123!'),
+        passwordHash: customerPassword,
         role: UserRole.CUSTOMER,
         status: UserStatus.ACTIVE,
         isEmailVerified: true,
@@ -182,11 +183,12 @@ async function main() {
   });
 
   // Create Professional users
+  const proPassword = await hashPassword('Pro123!');
   const plumber = await prisma.user.create({
     data: {
       email: 'paul.plombier@artisan.fr',
       phone: '+33698765432',
-      passwordHash: hashPassword('Pro123!'),
+      passwordHash: proPassword,
       role: UserRole.PROFESSIONAL,
       status: UserStatus.ACTIVE,
       isEmailVerified: true,
@@ -247,7 +249,7 @@ async function main() {
     data: {
       email: 'sarah.serrurier@artisan.fr',
       phone: '+33611223344',
-      passwordHash: hashPassword('Pro123!'),
+      passwordHash: proPassword,
       role: UserRole.PROFESSIONAL,
       status: UserStatus.ACTIVE,
       isEmailVerified: true,
@@ -313,7 +315,7 @@ async function main() {
     data: {
       email: 'pending.pro@artisan.fr',
       phone: '+33655443322',
-      passwordHash: hashPassword('Pro123!'),
+      passwordHash: proPassword,
       role: UserRole.PROFESSIONAL,
       status: UserStatus.PENDING_VERIFICATION,
       isEmailVerified: true,

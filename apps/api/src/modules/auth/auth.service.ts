@@ -14,7 +14,7 @@ import { authenticator } from 'otplib';
 import * as QRCode from 'qrcode';
 
 import { PrismaService } from '@common/prisma/prisma.service';
-import { UserRole, UserStatus, OtpChannel, SecurityEventSeverity } from '@depan-express/database';
+import { UserRole, UserStatus, OtpChannel, SecurityEventSeverity } from '@depan-express/types';
 import { SignupDto, LoginDto, RefreshTokenDto } from './dto';
 import { APP_CONSTANTS, ERROR_CODES } from '@depan-express/config';
 
@@ -596,7 +596,7 @@ export class AuthService {
   // HELPERS
   // ============================================================
 
-  private async generateTokens(user: { id: string; email: string; role: UserRole }) {
+  private async generateTokens(user: { id: string; email: string; role: string }) {
     const payload = {
       sub: user.id,
       email: user.email,

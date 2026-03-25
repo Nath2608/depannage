@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '@common/prisma/prisma.service';
-import { ApprovalStatus, UserStatus, AuditActionType } from '@depan-express/database';
+import { ApprovalStatus, UserStatus, AuditActionType } from '@depan-express/types';
 
 @Injectable()
 export class AdminService {

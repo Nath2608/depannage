@@ -2,7 +2,7 @@ import { Injectable, NotFoundException, BadRequestException } from '@nestjs/comm
 import { ConfigService } from '@nestjs/config';
 import Stripe from 'stripe';
 import { PrismaService } from '@common/prisma/prisma.service';
-import { PaymentStatus, PaymentProvider, JobStatus, PayoutStatus, Currency } from '@depan-express/database';
+import { PaymentStatus, PaymentProvider, JobStatus, Currency } from '@depan-express/types';
 
 @Injectable()
 export class PaymentsService {
@@ -12,8 +12,9 @@ export class PaymentsService {
     private readonly prisma: PrismaService,
     private readonly configService: ConfigService,
   ) {
-    this.stripe = new Stripe(this.configService.get<string>('STRIPE_SECRET_KEY') || '', {
-      apiVersion: '2024-12-18.acacia',
+    const stripeKey = this.configService.get<string>('STRIPE_SECRET_KEY') || 'sk_test_placeholder';
+    this.stripe = new Stripe(stripeKey, {
+      apiVersion: '2025-02-24.acacia',
     });
   }
 
@@ -151,24 +152,13 @@ export class PaymentsService {
     });
   }
 
-  async createPayout(professionalId: string) {
-    // Get pending earnings
-    const pendingJobs = await this.prisma.job.findMany({
-      where: {
-        professionalId,
-        jobStatus: JobStatus.COMPLETED,
-        paymentIntents: {
-          some: { status: PaymentStatus.CAPTURED },
-        },
-      },
-      include: {
-        paymentIntents: {
-          where: { status: PaymentStatus.CAPTURED },
-        },
-      },
-    });
-
+  async createPayout(_professionalId: string) {
     // TODO: Implement full payout logic with Stripe Connect
+    // Will need to:
+    // 1. Get pending earnings from completed jobs
+    // 2. Calculate platform fees
+    // 3. Create Stripe Connect transfer
+    // 4. Update payout records
 
     return { success: true };
   }

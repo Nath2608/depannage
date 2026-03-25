@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '@common/prisma/prisma.service';
-import { JobStatus, ServiceRequestStatus, AssignmentStatus } from '@depan-express/database';
+import { JobStatus, ServiceRequestStatus, AssignmentStatus } from '@depan-express/types';
 
 @Injectable()
 export class JobsService {

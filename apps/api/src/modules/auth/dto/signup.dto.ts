@@ -5,7 +5,7 @@ import { UserRole } from '@depan-express/types';
 export class SignupDto {
   @ApiProperty({ example: 'jean.dupont@email.com' })
   @IsEmail({}, { message: 'Email invalide' })
-  email: string;
+  email!: string;
 
   @ApiPropertyOptional({ example: '+33612345678' })
   @IsOptional()
@@ -22,23 +22,23 @@ export class SignupDto {
   @Matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/, {
     message: 'Le mot de passe doit contenir au moins une majuscule, une minuscule, un chiffre et un caractère spécial',
   })
-  password: string;
+  password!: string;
 
   @ApiProperty({ example: 'Jean' })
   @IsString()
   @MinLength(2)
   @MaxLength(100)
-  firstName: string;
+  firstName!: string;
 
   @ApiProperty({ example: 'Dupont' })
   @IsString()
   @MinLength(2)
   @MaxLength(100)
-  lastName: string;
+  lastName!: string;
 
   @ApiProperty({ enum: ['CUSTOMER', 'PROFESSIONAL'], example: 'CUSTOMER' })
   @IsEnum([UserRole.CUSTOMER, UserRole.PROFESSIONAL], {
     message: 'Le rôle doit être CUSTOMER ou PROFESSIONAL',
   })
-  role: UserRole.CUSTOMER | UserRole.PROFESSIONAL;
+  role!: UserRole.CUSTOMER | UserRole.PROFESSIONAL;
 }

@@ -1,4 +1,4 @@
-import { IsString, IsOptional, IsBoolean, MaxLength, IsNumber, Min, Max, IsLatitude, IsLongitude } from 'class-validator';
+import { IsString, IsOptional, IsBoolean, MaxLength, IsNumber, IsLatitude, IsLongitude } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class UpdateCustomerProfileDto {
@@ -35,12 +35,12 @@ export class CreateAddressDto {
   @ApiProperty({ example: 'Domicile' })
   @IsString()
   @MaxLength(50)
-  label: string;
+  label!: string;
 
   @ApiProperty({ example: '15 Rue de la Paix' })
   @IsString()
   @MaxLength(255)
-  streetLine1: string;
+  streetLine1!: string;
 
   @ApiPropertyOptional({ example: 'Bâtiment A' })
   @IsOptional()
@@ -51,12 +51,12 @@ export class CreateAddressDto {
   @ApiProperty({ example: '75002' })
   @IsString()
   @MaxLength(10)
-  postalCode: string;
+  postalCode!: string;
 
   @ApiProperty({ example: 'Paris' })
   @IsString()
   @MaxLength(100)
-  city: string;
+  city!: string;
 
   @ApiPropertyOptional({ example: 'FR' })
   @IsOptional()
@@ -67,12 +67,12 @@ export class CreateAddressDto {
   @ApiProperty({ example: 48.8698 })
   @IsNumber()
   @IsLatitude()
-  latitude: number;
+  latitude!: number;
 
   @ApiProperty({ example: 2.3298 })
   @IsNumber()
   @IsLongitude()
-  longitude: number;
+  longitude!: number;
 
   @ApiPropertyOptional({ example: 'Digicode 1234, 3ème étage' })
   @IsOptional()

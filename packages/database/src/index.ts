@@ -1,5 +1,6 @@
-// Re-export Prisma client
-export { prisma, default as PrismaClient } from './client';
+// Re-export Prisma client instance
+export { prisma } from './client';
 
-// Re-export all Prisma types and enums
+// Re-export PrismaClient class and all Prisma types/enums
+export { PrismaClient, Prisma } from '@prisma/client';
 export * from '@prisma/client';

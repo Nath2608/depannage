@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '@common/prisma/prisma.service';
-import { DisputeStatus, DisputeReason, ResolutionType, JobStatus } from '@depan-express/database';
+import { DisputeStatus, DisputeReason, ResolutionType, JobStatus } from '@depan-express/types';
 import { APP_CONSTANTS } from '@depan-express/config';
 
 interface OpenDisputeDto {
@@ -139,7 +139,7 @@ export class DisputesService {
   // Admin functions
   async resolve(
     disputeId: string,
-    adminUserId: string,
+    _adminUserId: string,
     resolutionType: ResolutionType,
     notes?: string,
   ) {

@@ -8,63 +8,63 @@ import { ApiProperty } from '@nestjs/swagger';
 export class ForgotPasswordDto {
   @ApiProperty({ example: 'jean.dupont@email.com' })
   @IsEmail({}, { message: 'Email invalide' })
-  email: string;
+  email!: string;
 }
 
 export class ResetPasswordDto {
   @ApiProperty()
   @IsString()
   @IsNotEmpty()
-  token: string;
+  token!: string;
 
   @ApiProperty({ example: 'NewSecureP@ss123' })
   @IsString()
   @MinLength(8)
   @MaxLength(100)
-  newPassword: string;
+  newPassword!: string;
 }
 
 export class VerifyEmailDto {
   @ApiProperty()
   @IsString()
   @IsNotEmpty()
-  token: string;
+  token!: string;
 }
 
 export class VerifyPhoneDto {
   @ApiProperty({ example: '123456' })
   @IsString()
   @Length(6, 6, { message: 'Le code doit contenir 6 chiffres' })
-  code: string;
+  code!: string;
 }
 
 export class Enable2FAResponseDto {
   @ApiProperty()
-  secret: string;
+  secret!: string;
 
   @ApiProperty()
-  qrCodeUrl: string;
+  qrCodeUrl!: string;
 }
 
 export class Verify2FADto {
   @ApiProperty({ example: '123456' })
   @IsString()
   @Length(6, 6, { message: 'Le code doit contenir 6 chiffres' })
-  code: string;
+  code!: string;
 }
 
 export class AuthResponseDto {
   @ApiProperty()
-  accessToken: string;
+  accessToken!: string;
 
   @ApiProperty()
-  refreshToken: string;
+  refreshToken!: string;
 
   @ApiProperty()
-  expiresIn: number;
+  expiresIn!: number;
 
   @ApiProperty()
-  user: {
+  user!: {
     id: string;
     email: string;
     role: string;

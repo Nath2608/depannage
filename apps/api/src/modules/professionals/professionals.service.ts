@@ -1,6 +1,6 @@
-import { Injectable, NotFoundException, ConflictException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
 import { PrismaService } from '@common/prisma/prisma.service';
-import { ApprovalStatus, TradeType } from '@depan-express/database';
+import { ApprovalStatus, TradeType } from '@depan-express/types';
 import {
   ProfessionalOnboardingDto,
   UpdateProfessionalProfileDto,

@@ -5,5 +5,5 @@ export class RefreshTokenDto {
   @ApiProperty({ example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...' })
   @IsString()
   @IsNotEmpty({ message: 'Le refresh token est requis' })
-  refreshToken: string;
+  refreshToken!: string;
 }

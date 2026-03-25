@@ -13,7 +13,10 @@ RUN corepack enable && corepack prepare pnpm@latest --activate
 # Copy workspace configuration
 COPY pnpm-lock.yaml pnpm-workspace.yaml package.json ./
 COPY apps/api/package.json ./apps/api/
-COPY packages/shared/package.json ./packages/shared/
+COPY packages/database/package.json ./packages/database/
+COPY packages/config/package.json ./packages/config/
+COPY packages/types/package.json ./packages/types/
+COPY packages/utils/package.json ./packages/utils/
 
 # Install dependencies
 RUN pnpm install --frozen-lockfile
@@ -29,17 +32,16 @@ RUN corepack enable && corepack prepare pnpm@latest --activate
 
 # Copy dependencies
 COPY --from=deps /app/node_modules ./node_modules
-COPY --from=deps /app/apps/api/node_modules ./apps/api/node_modules
-COPY --from=deps /app/packages/shared/node_modules ./packages/shared/node_modules
+COPY --from=deps /app/apps/api/node_modules ./apps/api/node_modules 2>/dev/null || true
 
 # Copy source code
 COPY . .
 
 # Generate Prisma client
-RUN cd apps/api && npx prisma generate
+RUN cd packages/database && npx prisma generate
 
 # Build the application
-RUN pnpm --filter api build
+RUN pnpm --filter @depan-express/api build
 
 # ============================================
 # Stage 3: Production
@@ -58,9 +60,9 @@ ENV PORT=3000
 
 # Copy built application
 COPY --from=builder /app/apps/api/dist ./dist
-COPY --from=builder /app/apps/api/node_modules ./node_modules
+COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/apps/api/package.json ./package.json
-COPY --from=builder /app/apps/api/prisma ./prisma
+COPY --from=builder /app/packages/database/prisma ./prisma
 
 # Set correct permissions
 RUN chown -R nestjs:nodejs /app

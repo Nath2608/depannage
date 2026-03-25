@@ -18,7 +18,8 @@ export class HealthController {
     private prismaHealth: PrismaHealthIndicator,
     private redisHealth: RedisHealthIndicator,
     private memory: MemoryHealthIndicator,
-    private disk: DiskHealthIndicator,
+    // @ts-expect-error - Reserved for future disk health checks
+    private _disk: DiskHealthIndicator,
     private prisma: PrismaService,
   ) {}
 

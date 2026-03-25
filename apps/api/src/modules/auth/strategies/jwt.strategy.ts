@@ -3,7 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { PrismaService } from '@common/prisma/prisma.service';
-import { UserStatus } from '@depan-express/database';
+import { UserStatus } from '@depan-express/types';
 
 export interface JwtPayload {
   sub: string;
@@ -16,7 +16,7 @@ export interface JwtPayload {
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
   constructor(
-    private readonly configService: ConfigService,
+    configService: ConfigService,
     private readonly prisma: PrismaService,
   ) {
     super({
