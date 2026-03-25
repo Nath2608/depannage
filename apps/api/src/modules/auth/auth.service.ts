@@ -377,6 +377,52 @@ export class AuthService {
   }
 
   // ============================================================
+  // GET CURRENT USER
+  // ============================================================
+
+  async getMe(userId: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        email: true,
+        phone: true,
+        role: true,
+        status: true,
+        isEmailVerified: true,
+        isPhoneVerified: true,
+        twoFactorEnabled: true,
+        createdAt: true,
+        customerProfile: {
+          select: {
+            firstName: true,
+            lastName: true,
+            avatarUrl: true,
+          },
+        },
+        professionalProfile: {
+          select: {
+            businessName: true,
+            firstName: true,
+            lastName: true,
+            tradeType: true,
+            approvalStatus: true,
+          },
+        },
+      },
+    });
+
+    if (!user) {
+      throw new UnauthorizedException({
+        code: ERROR_CODES.AUTH_INVALID_TOKEN,
+        message: 'Utilisateur non trouvé',
+      });
+    }
+
+    return user;
+  }
+
+  // ============================================================
   // 2FA
   // ============================================================
 

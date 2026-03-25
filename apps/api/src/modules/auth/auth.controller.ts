@@ -1,6 +1,7 @@
 import {
   Controller,
   Post,
+  Get,
   Body,
   UseGuards,
   Req,
@@ -97,6 +98,20 @@ export class AuthController {
     @Body() body: { refreshToken?: string },
   ) {
     return this.authService.logout(user.sub, body.refreshToken);
+  }
+
+  // ============================================================
+  // CURRENT USER
+  // ============================================================
+
+  @Get('me')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({ summary: 'Obtenir les informations de l\'utilisateur connecté' })
+  @ApiResponse({ status: 200, description: 'Informations utilisateur' })
+  @ApiResponse({ status: 401, description: 'Non authentifié' })
+  async me(@CurrentUser() user: CurrentUserPayload) {
+    return this.authService.getMe(user.sub);
   }
 
   // ============================================================
