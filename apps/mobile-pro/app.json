@@ -1,0 +1,98 @@
+{
+  "expo": {
+    "name": "Depan Express Pro",
+    "slug": "depan-express-pro",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./src/assets/icon.png",
+    "scheme": "depanexpresspro",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./src/assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#10B981"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "fr.depanexpress.pro",
+      "config": {
+        "googleMapsApiKey": ""
+      },
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "L'application a besoin de votre position pour les interventions.",
+        "NSLocationAlwaysUsageDescription": "L'application utilise votre position pour le suivi en temps réel.",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "L'application utilise votre position pour le suivi des interventions.",
+        "NSCameraUsageDescription": "Permet de prendre des photos pour les rapports d'intervention.",
+        "NSPhotoLibraryUsageDescription": "Permet d'ajouter des photos aux rapports d'intervention.",
+        "UIBackgroundModes": ["location", "fetch", "remote-notification"]
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./src/assets/adaptive-icon.png",
+        "backgroundColor": "#10B981"
+      },
+      "package": "fr.depanexpress.pro",
+      "permissions": [
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_BACKGROUND_LOCATION",
+        "CAMERA",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE"
+      ],
+      "config": {
+        "googleMaps": {
+          "apiKey": ""
+        }
+      }
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "static",
+      "favicon": "./src/assets/favicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-secure-store",
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "L'application utilise votre position pour le suivi des interventions.",
+          "isAndroidBackgroundLocationEnabled": true
+        }
+      ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Permet de prendre des photos pour les rapports."
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Permet d'ajouter des photos aux rapports."
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./src/assets/notification-icon.png",
+          "color": "#10B981"
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    },
+    "extra": {
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": ""
+      }
+    }
+  }
+}

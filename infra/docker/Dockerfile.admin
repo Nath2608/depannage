@@ -1,0 +1,65 @@
+# ============================================================
+# DEPAN EXPRESS - Admin Web Dockerfile
+# ============================================================
+
+# Base image
+FROM node:20-alpine AS base
+RUN apk add --no-cache libc6-compat
+RUN corepack enable && corepack prepare pnpm@9.15.0 --activate
+WORKDIR /app
+
+# ============================================================
+# Dependencies stage
+# ============================================================
+FROM base AS deps
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY apps/admin-web/package.json ./apps/admin-web/
+COPY packages/types/package.json ./packages/types/
+COPY packages/config/package.json ./packages/config/
+COPY packages/utils/package.json ./packages/utils/
+COPY packages/ui/package.json ./packages/ui/
+COPY packages/tsconfig/package.json ./packages/tsconfig/
+RUN pnpm install --frozen-lockfile
+
+# ============================================================
+# Development stage
+# ============================================================
+FROM base AS development
+COPY --from=deps /app/node_modules ./node_modules
+COPY . .
+EXPOSE 3001
+CMD ["pnpm", "--filter", "@depan-express/admin-web", "dev"]
+
+# ============================================================
+# Builder stage
+# ============================================================
+FROM base AS builder
+COPY --from=deps /app/node_modules ./node_modules
+COPY . .
+
+ARG NEXT_PUBLIC_API_URL
+ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
+
+RUN pnpm --filter @depan-express/admin-web build
+
+# ============================================================
+# Production stage
+# ============================================================
+FROM base AS production
+ENV NODE_ENV=production
+
+# Create non-root user
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 nextjs
+
+COPY --from=builder /app/apps/admin-web/public ./apps/admin-web/public
+COPY --from=builder --chown=nextjs:nodejs /app/apps/admin-web/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/apps/admin-web/.next/static ./apps/admin-web/.next/static
+
+USER nextjs
+
+EXPOSE 3001
+ENV PORT=3001
+ENV HOSTNAME="0.0.0.0"
+
+CMD ["node", "apps/admin-web/server.js"]

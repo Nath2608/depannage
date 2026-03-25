@@ -1,0 +1,74 @@
+{
+  "name": "depan-express",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Plateforme de dépannage à domicile - Plomberie & Serrurerie",
+  "author": "DepanExpress Team",
+  "license": "UNLICENSED",
+  "engines": {
+    "node": ">=20.0.0",
+    "pnpm": ">=9.0.0"
+  },
+  "packageManager": "pnpm@9.15.0",
+  "scripts": {
+    "build": "turbo build",
+    "dev": "turbo dev",
+    "dev:api": "pnpm --filter @depan-express/api dev",
+    "dev:admin": "pnpm --filter @depan-express/admin dev",
+    "dev:mobile-customer": "pnpm --filter @depan-express/mobile-customer dev",
+    "dev:mobile-pro": "pnpm --filter @depan-express/mobile-pro dev",
+    "lint": "turbo lint",
+    "lint:fix": "turbo lint:fix",
+    "typecheck": "turbo typecheck",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md}\"",
+    "test": "turbo test",
+    "test:cov": "turbo test:cov",
+    "test:e2e": "turbo test:e2e",
+    "test:api": "pnpm --filter @depan-express/api test",
+    "test:api:e2e": "pnpm --filter @depan-express/api test:e2e",
+    "clean": "turbo clean && rm -rf node_modules",
+    "db:generate": "pnpm --filter @depan-express/database db:generate",
+    "db:migrate": "pnpm --filter @depan-express/database db:migrate",
+    "db:migrate:deploy": "pnpm --filter @depan-express/database db:deploy",
+    "db:seed": "pnpm --filter @depan-express/database db:seed",
+    "db:studio": "pnpm --filter @depan-express/database db:studio",
+    "db:reset": "pnpm --filter @depan-express/database db:reset",
+    "db:push": "pnpm --filter @depan-express/database db:push",
+    "docker:up": "docker compose up -d",
+    "docker:up:dev": "docker compose --profile dev up -d",
+    "docker:up:prod": "docker compose -f docker-compose.prod.yml up -d",
+    "docker:down": "docker compose down",
+    "docker:down:volumes": "docker compose down -v",
+    "docker:logs": "docker compose logs -f",
+    "docker:logs:api": "docker compose logs -f api",
+    "docker:logs:admin": "docker compose logs -f admin",
+    "docker:build": "docker compose build --no-cache",
+    "docker:build:api": "docker compose build api --no-cache",
+    "docker:build:admin": "docker compose build admin --no-cache",
+    "docker:prune": "docker system prune -af",
+    "setup": "./scripts/dev-setup.sh",
+    "setup:reset": "./scripts/dev-reset.sh",
+    "deploy": "./scripts/deploy.sh",
+    "generate:api-client": "./scripts/generate-api-client.sh",
+    "prepare": "husky"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^19.6.1",
+    "@commitlint/config-conventional": "^19.6.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^15.3.0",
+    "prettier": "^3.4.2",
+    "turbo": "^2.3.3",
+    "typescript": "^5.7.2"
+  },
+  "lint-staged": {
+    "*.{ts,tsx,js,jsx}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{json,md}": [
+      "prettier --write"
+    ]
+  }
+}

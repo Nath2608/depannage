@@ -1,0 +1,950 @@
+// ============================================================
+// DEPAN EXPRESS - PRISMA SCHEMA
+// ============================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================
+// ENUMS
+// ============================================================
+
+enum UserRole {
+  CUSTOMER
+  PROFESSIONAL
+  ADMIN
+  SUPPORT
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+  PENDING_VERIFICATION
+  DELETED
+}
+
+enum OtpChannel {
+  EMAIL
+  SMS
+}
+
+enum TradeType {
+  PLUMBING
+  LOCKSMITH
+}
+
+enum CompanyType {
+  AUTO_ENTREPRENEUR
+  EURL
+  SARL
+  SAS
+  SASU
+  EI
+}
+
+enum ApprovalStatus {
+  PENDING
+  UNDER_REVIEW
+  APPROVED
+  REJECTED
+  SUSPENDED
+}
+
+enum DocumentType {
+  IDENTITY_CARD
+  PASSPORT
+  DRIVING_LICENSE
+  KBIS
+  INSURANCE_CERTIFICATE
+  PROFESSIONAL_CARD
+  DIPLOMA
+}
+
+enum DocumentVerificationStatus {
+  PENDING
+  VERIFIED
+  REJECTED
+  EXPIRED
+}
+
+enum BankAccountVerificationStatus {
+  PENDING
+  VERIFIED
+  FAILED
+}
+
+enum UrgencyType {
+  EMERGENCY
+  SCHEDULED
+}
+
+enum ProblemCategory {
+  // Plumbing
+  WATER_LEAK
+  CLOGGED_DRAIN
+  NO_HOT_WATER
+  TOILET_ISSUE
+  FAUCET_PROBLEM
+  WATER_HEATER_MALFUNCTION
+  PIPE_BURST
+  LOW_WATER_PRESSURE
+  OTHER_PLUMBING
+  // Locksmith
+  LOCKED_OUT
+  BROKEN_LOCK
+  LOST_KEYS
+  BURGLARY_DAMAGE
+  KEY_STUCK
+  DOOR_NOT_CLOSING
+  UPGRADE_SECURITY
+  OTHER_LOCKSMITH
+}
+
+enum ServiceRequestStatus {
+  DRAFT
+  SUBMITTED
+  SEARCHING
+  ASSIGNED
+  NO_PROFESSIONAL_AVAILABLE
+  CANCELLED_BY_CUSTOMER
+  CANCELLED_BY_SYSTEM
+  EXPIRED
+}
+
+enum JobStatus {
+  ACCEPTED
+  EN_ROUTE
+  ARRIVED
+  DIAGNOSIS
+  QUOTE_SENT
+  QUOTE_ACCEPTED
+  QUOTE_REJECTED
+  WORK_IN_PROGRESS
+  COMPLETED
+  CANCELLED_BY_CUSTOMER
+  CANCELLED_BY_PROFESSIONAL
+  CANCELLED_BY_ADMIN
+}
+
+enum AssignmentStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+  EXPIRED
+  CANCELLED
+}
+
+enum MediaType {
+  IMAGE
+  VIDEO
+  DOCUMENT
+}
+
+enum QuoteStatus {
+  DRAFT
+  SENT
+  ACCEPTED
+  REJECTED
+  EXPIRED
+  SUPERSEDED
+}
+
+enum QuoteItemType {
+  TRAVEL
+  LABOR
+  PARTS
+  SURCHARGE_NIGHT
+  SURCHARGE_WEEKEND
+  SURCHARGE_HOLIDAY
+  SURCHARGE_EMERGENCY
+  DISCOUNT
+  OTHER
+}
+
+enum PaymentStatus {
+  PENDING
+  REQUIRES_ACTION
+  AUTHORIZED
+  CAPTURED
+  CANCELLED
+  FAILED
+  REFUNDED
+  PARTIALLY_REFUNDED
+}
+
+enum PaymentProvider {
+  STRIPE
+}
+
+enum PayoutStatus {
+  PENDING
+  IN_TRANSIT
+  PAID
+  FAILED
+  CANCELLED
+}
+
+enum RefundStatus {
+  PENDING
+  SUCCEEDED
+  FAILED
+}
+
+enum Currency {
+  EUR
+}
+
+enum DisputeReason {
+  POOR_QUALITY
+  INCOMPLETE_WORK
+  OVERCHARGED
+  PROFESSIONAL_NO_SHOW
+  DAMAGE_CAUSED
+  UNPROFESSIONAL_BEHAVIOR
+  WRONG_DIAGNOSIS
+  UNAUTHORIZED_WORK
+  OTHER
+}
+
+enum DisputeStatus {
+  OPENED
+  UNDER_REVIEW
+  AWAITING_CUSTOMER_RESPONSE
+  AWAITING_PROFESSIONAL_RESPONSE
+  RESOLVED
+  CLOSED
+}
+
+enum ResolutionType {
+  REJECTED
+  PARTIAL_REFUND
+  FULL_REFUND
+  PROFESSIONAL_RETURN
+  CREDIT_ISSUED
+  MEDIATED
+}
+
+enum DayOfWeek {
+  MONDAY
+  TUESDAY
+  WEDNESDAY
+  THURSDAY
+  FRIDAY
+  SATURDAY
+  SUNDAY
+}
+
+enum SecurityEventSeverity {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+// ============================================================
+// USER & AUTHENTICATION
+// ============================================================
+
+model User {
+  id                  String     @id @default(uuid()) @db.Uuid
+  email               String     @unique @db.VarChar(255)
+  phone               String?    @unique @db.VarChar(20)
+  passwordHash        String     @map("password_hash") @db.VarChar(255)
+  role                UserRole   @default(CUSTOMER)
+  status              UserStatus @default(PENDING_VERIFICATION)
+  isEmailVerified     Boolean    @default(false) @map("is_email_verified")
+  isPhoneVerified     Boolean    @default(false) @map("is_phone_verified")
+  twoFactorEnabled    Boolean    @default(false) @map("two_factor_enabled")
+  twoFactorSecret     String?    @map("two_factor_secret") @db.VarChar(255)
+  failedLoginAttempts Int        @default(0) @map("failed_login_attempts")
+  lockedUntil         DateTime?  @map("locked_until")
+  lastLoginAt         DateTime?  @map("last_login_at")
+  createdAt           DateTime   @default(now()) @map("created_at")
+  updatedAt           DateTime   @updatedAt @map("updated_at")
+  deletedAt           DateTime?  @map("deleted_at")
+
+  // Relations
+  sessions             UserSession[]
+  otpCodes             OtpCode[]
+  customerProfile      CustomerProfile?
+  professionalProfile  ProfessionalProfile?
+  addresses            UserAddress[]
+  serviceRequests      ServiceRequest[]
+  jobsAsCustomer       Job[]                 @relation("CustomerJobs")
+  jobsAsProfessional   Job[]                 @relation("ProfessionalJobs")
+  reviewsGiven         Review[]              @relation("CustomerReviews")
+  reviewsReceived      Review[]              @relation("ProfessionalReviews")
+  disputesOpened       Dispute[]
+  disputeEvidences     DisputeEvidence[]
+  uploadedMedia        ServiceRequestMedia[]
+  auditLogs            AuditLog[]
+  securityEvents       SecurityEvent[]
+  paymentIntents       PaymentIntent[]
+  documentReviews      ProfessionalDocument[] @relation("DocumentReviewer")
+
+  @@index([email])
+  @@index([phone])
+  @@index([role, status])
+  @@index([deletedAt])
+  @@map("users")
+}
+
+model UserSession {
+  id               String    @id @default(uuid()) @db.Uuid
+  userId           String    @map("user_id") @db.Uuid
+  refreshTokenHash String    @map("refresh_token_hash") @db.VarChar(255)
+  ipAddress        String?   @map("ip_address") @db.VarChar(45)
+  userAgent        String?   @map("user_agent") @db.Text
+  expiresAt        DateTime  @map("expires_at")
+  revokedAt        DateTime? @map("revoked_at")
+  createdAt        DateTime  @default(now()) @map("created_at")
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@index([revokedAt])
+  @@map("user_sessions")
+}
+
+model OtpCode {
+  id        String     @id @default(uuid()) @db.Uuid
+  userId    String     @map("user_id") @db.Uuid
+  channel   OtpChannel
+  codeHash  String     @map("code_hash") @db.VarChar(255)
+  expiresAt DateTime   @map("expires_at")
+  usedAt    DateTime?  @map("used_at")
+  createdAt DateTime   @default(now()) @map("created_at")
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, channel])
+  @@index([expiresAt])
+  @@map("otp_codes")
+}
+
+// ============================================================
+// CUSTOMER PROFILE
+// ============================================================
+
+model CustomerProfile {
+  id                String    @id @default(uuid()) @db.Uuid
+  userId            String    @unique @map("user_id") @db.Uuid
+  firstName         String    @map("first_name") @db.VarChar(100)
+  lastName          String    @map("last_name") @db.VarChar(100)
+  birthDate         DateTime? @map("birth_date") @db.Date
+  defaultAddressId  String?   @map("default_address_id") @db.Uuid
+  avatarUrl         String?   @map("avatar_url") @db.VarChar(500)
+  preferredLanguage String    @default("fr") @map("preferred_language") @db.VarChar(5)
+  marketingConsent  Boolean   @default(false) @map("marketing_consent")
+  termsAcceptedAt   DateTime  @map("terms_accepted_at")
+  privacyAcceptedAt DateTime  @map("privacy_accepted_at")
+  createdAt         DateTime  @default(now()) @map("created_at")
+  updatedAt         DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  defaultAddress UserAddress? @relation(fields: [defaultAddressId], references: [id], onDelete: SetNull)
+
+  @@map("customer_profiles")
+}
+
+model UserAddress {
+  id          String   @id @default(uuid()) @db.Uuid
+  userId      String   @map("user_id") @db.Uuid
+  label       String   @db.VarChar(50)
+  streetLine1 String   @map("street_line_1") @db.VarChar(255)
+  streetLine2 String?  @map("street_line_2") @db.VarChar(255)
+  postalCode  String   @map("postal_code") @db.VarChar(10)
+  city        String   @db.VarChar(100)
+  country     String   @default("FR") @db.VarChar(2)
+  latitude    Decimal  @db.Decimal(10, 8)
+  longitude   Decimal  @db.Decimal(11, 8)
+  accessNotes String?  @map("access_notes") @db.Text
+  isDefault   Boolean  @default(false) @map("is_default")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  user              User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  customerProfiles  CustomerProfile[]
+  serviceRequests   ServiceRequest[]
+
+  @@index([userId])
+  @@index([postalCode])
+  @@index([latitude, longitude])
+  @@map("user_addresses")
+}
+
+// ============================================================
+// PROFESSIONAL PROFILE
+// ============================================================
+
+model ProfessionalProfile {
+  id                    String         @id @default(uuid()) @db.Uuid
+  userId                String         @unique @map("user_id") @db.Uuid
+  businessName          String         @map("business_name") @db.VarChar(200)
+  firstName             String         @map("first_name") @db.VarChar(100)
+  lastName              String         @map("last_name") @db.VarChar(100)
+  tradeType             TradeType      @map("trade_type")
+  companyType           CompanyType    @map("company_type")
+  siret                 String         @unique @db.VarChar(14)
+  vatNumber             String?        @map("vat_number") @db.VarChar(20)
+  insurancePolicyNumber String?        @map("insurance_policy_number") @db.VarChar(50)
+  insuranceExpiryDate   DateTime?      @map("insurance_expiry_date") @db.Date
+  yearsOfExperience     Int            @default(0) @map("years_of_experience")
+  bio                   String?        @db.Text
+  ratingAvg             Decimal        @default(0) @map("rating_avg") @db.Decimal(3, 2)
+  ratingCount           Int            @default(0) @map("rating_count")
+  jobCount              Int            @default(0) @map("job_count")
+  isKycVerified         Boolean        @default(false) @map("is_kyc_verified")
+  isBackgroundChecked   Boolean        @default(false) @map("is_background_checked")
+  isActiveForDispatch   Boolean        @default(false) @map("is_active_for_dispatch")
+  approvalStatus        ApprovalStatus @default(PENDING) @map("approval_status")
+  approvedAt            DateTime?      @map("approved_at")
+  createdAt             DateTime       @default(now()) @map("created_at")
+  updatedAt             DateTime       @updatedAt @map("updated_at")
+
+  // Relations
+  user          User                       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  specialties   ProfessionalSpecialty[]
+  serviceAreas  ProfessionalServiceArea[]
+  availability  ProfessionalAvailability[]
+  documents     ProfessionalDocument[]
+  bankAccounts  ProfessionalBankAccount[]
+  assignments   JobAssignment[]
+  quotes        Quote[]
+  payouts       Payout[]
+
+  @@index([tradeType, approvalStatus])
+  @@index([isActiveForDispatch])
+  @@index([ratingAvg])
+  @@map("professional_profiles")
+}
+
+model ProfessionalSpecialty {
+  id             String   @id @default(uuid()) @db.Uuid
+  professionalId String   @map("professional_id") @db.Uuid
+  specialtyCode  String   @map("specialty_code") @db.VarChar(50)
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  // Relations
+  professional ProfessionalProfile @relation(fields: [professionalId], references: [id], onDelete: Cascade)
+
+  @@unique([professionalId, specialtyCode])
+  @@map("professional_specialties")
+}
+
+model ProfessionalServiceArea {
+  id             String   @id @default(uuid()) @db.Uuid
+  professionalId String   @map("professional_id") @db.Uuid
+  city           String?  @db.VarChar(100)
+  postalCode     String?  @map("postal_code") @db.VarChar(10)
+  radiusKm       Int      @default(10) @map("radius_km")
+  latitude       Decimal  @db.Decimal(10, 8)
+  longitude      Decimal  @db.Decimal(11, 8)
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  professional ProfessionalProfile @relation(fields: [professionalId], references: [id], onDelete: Cascade)
+
+  @@index([professionalId])
+  @@index([latitude, longitude])
+  @@index([postalCode])
+  @@map("professional_service_areas")
+}
+
+model ProfessionalAvailability {
+  id              String    @id @default(uuid()) @db.Uuid
+  professionalId  String    @map("professional_id") @db.Uuid
+  dayOfWeek       DayOfWeek @map("day_of_week")
+  startTime       String    @map("start_time") @db.VarChar(5) // HH:MM format
+  endTime         String    @map("end_time") @db.VarChar(5) // HH:MM format
+  isEmergencySlot Boolean   @default(false) @map("is_emergency_slot")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  professional ProfessionalProfile @relation(fields: [professionalId], references: [id], onDelete: Cascade)
+
+  @@index([professionalId, dayOfWeek])
+  @@map("professional_availability")
+}
+
+model ProfessionalDocument {
+  id                 String                     @id @default(uuid()) @db.Uuid
+  professionalId     String                     @map("professional_id") @db.Uuid
+  documentType       DocumentType               @map("document_type")
+  storageKey         String                     @map("storage_key") @db.VarChar(500)
+  fileName           String                     @map("file_name") @db.VarChar(255)
+  mimeType           String                     @map("mime_type") @db.VarChar(100)
+  fileSize           Int                        @map("file_size")
+  verificationStatus DocumentVerificationStatus @default(PENDING) @map("verification_status")
+  reviewedBy         String?                    @map("reviewed_by") @db.Uuid
+  reviewedAt         DateTime?                  @map("reviewed_at")
+  rejectionReason    String?                    @map("rejection_reason") @db.Text
+  expiresAt          DateTime?                  @map("expires_at")
+  createdAt          DateTime                   @default(now()) @map("created_at")
+  updatedAt          DateTime                   @updatedAt @map("updated_at")
+
+  // Relations
+  professional ProfessionalProfile @relation(fields: [professionalId], references: [id], onDelete: Cascade)
+  reviewer     User?               @relation("DocumentReviewer", fields: [reviewedBy], references: [id], onDelete: SetNull)
+
+  @@index([professionalId, documentType])
+  @@index([verificationStatus])
+  @@map("professional_documents")
+}
+
+model ProfessionalBankAccount {
+  id                 String                        @id @default(uuid()) @db.Uuid
+  professionalId     String                        @map("professional_id") @db.Uuid
+  provider           PaymentProvider               @default(STRIPE)
+  providerAccountId  String                        @map("provider_account_id") @db.VarChar(100)
+  ibanLast4          String                        @map("iban_last4") @db.VarChar(4)
+  accountHolderName  String                        @map("account_holder_name") @db.VarChar(200)
+  isDefault          Boolean                       @default(false) @map("is_default")
+  verificationStatus BankAccountVerificationStatus @default(PENDING) @map("verification_status")
+  createdAt          DateTime                      @default(now()) @map("created_at")
+  updatedAt          DateTime                      @updatedAt @map("updated_at")
+
+  // Relations
+  professional ProfessionalProfile @relation(fields: [professionalId], references: [id], onDelete: Cascade)
+
+  @@index([professionalId])
+  @@map("professional_bank_accounts")
+}
+
+// ============================================================
+// SERVICE REQUESTS & JOBS
+// ============================================================
+
+model ServiceRequest {
+  id                     String               @id @default(uuid()) @db.Uuid
+  customerId             String               @map("customer_id") @db.Uuid
+  requestedTrade         TradeType            @map("requested_trade")
+  problemCategory        ProblemCategory      @map("problem_category")
+  urgencyType            UrgencyType          @map("urgency_type")
+  scheduledFor           DateTime?            @map("scheduled_for")
+  addressId              String               @map("address_id") @db.Uuid
+  description            String               @db.Text
+  accessNotes            String?              @map("access_notes") @db.Text
+  status                 ServiceRequestStatus @default(DRAFT)
+  estimatedPriceMin      Decimal?             @map("estimated_price_min") @db.Decimal(10, 2)
+  estimatedPriceMax      Decimal?             @map("estimated_price_max") @db.Decimal(10, 2)
+  estimatedEtaMinutes    Int?                 @map("estimated_eta_minutes")
+  assignedProfessionalId String?              @map("assigned_professional_id") @db.Uuid
+  createdAt              DateTime             @default(now()) @map("created_at")
+  updatedAt              DateTime             @updatedAt @map("updated_at")
+  cancelledAt            DateTime?            @map("cancelled_at")
+
+  // Relations
+  customer    User                  @relation(fields: [customerId], references: [id])
+  address     UserAddress           @relation(fields: [addressId], references: [id])
+  media       ServiceRequestMedia[]
+  assignments JobAssignment[]
+  job         Job?
+
+  @@index([customerId])
+  @@index([status])
+  @@index([requestedTrade, urgencyType])
+  @@index([createdAt])
+  @@map("service_requests")
+}
+
+model ServiceRequestMedia {
+  id               String    @id @default(uuid()) @db.Uuid
+  requestId        String    @map("request_id") @db.Uuid
+  uploadedByUserId String    @map("uploaded_by_user_id") @db.Uuid
+  mediaType        MediaType @map("media_type")
+  storageKey       String    @map("storage_key") @db.VarChar(500)
+  createdAt        DateTime  @default(now()) @map("created_at")
+
+  // Relations
+  request    ServiceRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  uploadedBy User           @relation(fields: [uploadedByUserId], references: [id])
+
+  @@index([requestId])
+  @@map("service_request_media")
+}
+
+model JobAssignment {
+  id               String           @id @default(uuid()) @db.Uuid
+  requestId        String           @map("request_id") @db.Uuid
+  professionalId   String           @map("professional_id") @db.Uuid
+  assignmentStatus AssignmentStatus @default(PENDING) @map("assignment_status")
+  assignedAt       DateTime         @default(now()) @map("assigned_at")
+  respondedAt      DateTime?        @map("responded_at")
+  responseReason   String?          @map("response_reason") @db.Text
+
+  // Relations
+  request      ServiceRequest      @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  professional ProfessionalProfile @relation(fields: [professionalId], references: [id])
+
+  @@index([requestId])
+  @@index([professionalId, assignmentStatus])
+  @@map("job_assignments")
+}
+
+model Job {
+  id                String    @id @default(uuid()) @db.Uuid
+  requestId         String    @unique @map("request_id") @db.Uuid
+  customerId        String    @map("customer_id") @db.Uuid
+  professionalId    String    @map("professional_id") @db.Uuid
+  jobStatus         JobStatus @default(ACCEPTED) @map("job_status")
+  acceptedAt        DateTime? @map("accepted_at")
+  enRouteAt         DateTime? @map("en_route_at")
+  arrivedAt         DateTime? @map("arrived_at")
+  diagnosisStartedAt DateTime? @map("diagnosis_started_at")
+  workStartedAt     DateTime? @map("work_started_at")
+  workCompletedAt   DateTime? @map("work_completed_at")
+  cancelledAt       DateTime? @map("cancelled_at")
+  createdAt         DateTime  @default(now()) @map("created_at")
+  updatedAt         DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  request        ServiceRequest  @relation(fields: [requestId], references: [id])
+  customer       User            @relation("CustomerJobs", fields: [customerId], references: [id])
+  professional   User            @relation("ProfessionalJobs", fields: [professionalId], references: [id])
+  quotes         Quote[]
+  review         Review?
+  dispute        Dispute?
+  paymentIntents PaymentIntent[]
+  invoices       Invoice[]
+  jobMedia       JobMedia[]
+
+  @@index([customerId])
+  @@index([professionalId])
+  @@index([jobStatus])
+  @@index([createdAt])
+  @@map("jobs")
+}
+
+model JobMedia {
+  id               String    @id @default(uuid()) @db.Uuid
+  jobId            String    @map("job_id") @db.Uuid
+  uploadedByUserId String    @map("uploaded_by_user_id") @db.Uuid
+  mediaType        MediaType @map("media_type")
+  storageKey       String    @map("storage_key") @db.VarChar(500)
+  caption          String?   @db.VarChar(255)
+  isBefore         Boolean   @default(false) @map("is_before")
+  isAfter          Boolean   @default(false) @map("is_after")
+  createdAt        DateTime  @default(now()) @map("created_at")
+
+  // Relations
+  job Job @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  @@index([jobId])
+  @@map("job_media")
+}
+
+// ============================================================
+// QUOTES & INVOICES
+// ============================================================
+
+model Quote {
+  id                String      @id @default(uuid()) @db.Uuid
+  jobId             String      @map("job_id") @db.Uuid
+  professionalId    String      @map("professional_id") @db.Uuid
+  customerId        String      @map("customer_id") @db.Uuid
+  status            QuoteStatus @default(DRAFT)
+  travelFee         Decimal     @default(0) @map("travel_fee") @db.Decimal(10, 2)
+  laborFee          Decimal     @default(0) @map("labor_fee") @db.Decimal(10, 2)
+  partsFee          Decimal     @default(0) @map("parts_fee") @db.Decimal(10, 2)
+  surchargeFee      Decimal     @default(0) @map("surcharge_fee") @db.Decimal(10, 2)
+  vatAmount         Decimal     @default(0) @map("vat_amount") @db.Decimal(10, 2)
+  totalAmount       Decimal     @map("total_amount") @db.Decimal(10, 2)
+  currency          Currency    @default(EUR)
+  notes             String?     @db.Text
+  createdAt         DateTime    @default(now()) @map("created_at")
+  sentAt            DateTime?   @map("sent_at")
+  acceptedAt        DateTime?   @map("accepted_at")
+  rejectedAt        DateTime?   @map("rejected_at")
+  signedDocumentKey String?     @map("signed_document_key") @db.VarChar(500)
+  updatedAt         DateTime    @updatedAt @map("updated_at")
+
+  // Relations
+  job          Job           @relation(fields: [jobId], references: [id])
+  professional ProfessionalProfile @relation(fields: [professionalId], references: [id])
+  items        QuoteItem[]
+  invoices     Invoice[]
+
+  @@index([jobId])
+  @@index([professionalId])
+  @@index([status])
+  @@map("quotes")
+}
+
+model QuoteItem {
+  id         String        @id @default(uuid()) @db.Uuid
+  quoteId    String        @map("quote_id") @db.Uuid
+  itemType   QuoteItemType @map("item_type")
+  label      String        @db.VarChar(255)
+  quantity   Decimal       @db.Decimal(10, 2)
+  unitPrice  Decimal       @map("unit_price") @db.Decimal(10, 2)
+  totalPrice Decimal       @map("total_price") @db.Decimal(10, 2)
+  createdAt  DateTime      @default(now()) @map("created_at")
+
+  // Relations
+  quote Quote @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+
+  @@index([quoteId])
+  @@map("quote_items")
+}
+
+model Invoice {
+  id              String   @id @default(uuid()) @db.Uuid
+  jobId           String   @map("job_id") @db.Uuid
+  quoteId         String?  @map("quote_id") @db.Uuid
+  invoiceNumber   String   @unique @map("invoice_number") @db.VarChar(50)
+  subtotalAmount  Decimal  @map("subtotal_amount") @db.Decimal(10, 2)
+  vatAmount       Decimal  @map("vat_amount") @db.Decimal(10, 2)
+  totalAmount     Decimal  @map("total_amount") @db.Decimal(10, 2)
+  pdfStorageKey   String?  @map("pdf_storage_key") @db.VarChar(500)
+  issuedAt        DateTime @map("issued_at")
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  // Relations
+  job   Job    @relation(fields: [jobId], references: [id])
+  quote Quote? @relation(fields: [quoteId], references: [id])
+
+  @@index([jobId])
+  @@index([invoiceNumber])
+  @@map("invoices")
+}
+
+// ============================================================
+// PAYMENTS
+// ============================================================
+
+model PaymentIntent {
+  id                      String        @id @default(uuid()) @db.Uuid
+  jobId                   String        @map("job_id") @db.Uuid
+  customerId              String        @map("customer_id") @db.Uuid
+  provider                PaymentProvider @default(STRIPE)
+  providerPaymentIntentId String        @map("provider_payment_intent_id") @db.VarChar(100)
+  amount                  Decimal       @db.Decimal(10, 2)
+  currency                Currency      @default(EUR)
+  status                  PaymentStatus @default(PENDING)
+  authorizedAt            DateTime?     @map("authorized_at")
+  capturedAt              DateTime?     @map("captured_at")
+  cancelledAt             DateTime?     @map("cancelled_at")
+  createdAt               DateTime      @default(now()) @map("created_at")
+  updatedAt               DateTime      @updatedAt @map("updated_at")
+
+  // Relations
+  job      Job      @relation(fields: [jobId], references: [id])
+  customer User     @relation(fields: [customerId], references: [id])
+  refunds  Refund[]
+
+  @@index([jobId])
+  @@index([customerId])
+  @@index([status])
+  @@index([providerPaymentIntentId])
+  @@map("payment_intents")
+}
+
+model Payout {
+  id               String        @id @default(uuid()) @db.Uuid
+  professionalId   String        @map("professional_id") @db.Uuid
+  provider         PaymentProvider @default(STRIPE)
+  providerPayoutId String        @map("provider_payout_id") @db.VarChar(100)
+  grossAmount      Decimal       @map("gross_amount") @db.Decimal(10, 2)
+  platformFee      Decimal       @map("platform_fee") @db.Decimal(10, 2)
+  netAmount        Decimal       @map("net_amount") @db.Decimal(10, 2)
+  currency         Currency      @default(EUR)
+  status           PayoutStatus  @default(PENDING)
+  paidAt           DateTime?     @map("paid_at")
+  createdAt        DateTime      @default(now()) @map("created_at")
+  updatedAt        DateTime      @updatedAt @map("updated_at")
+
+  // Relations
+  professional ProfessionalProfile @relation(fields: [professionalId], references: [id])
+
+  @@index([professionalId])
+  @@index([status])
+  @@map("payouts")
+}
+
+model Refund {
+  id               String       @id @default(uuid()) @db.Uuid
+  paymentIntentId  String       @map("payment_intent_id") @db.Uuid
+  disputeId        String?      @map("dispute_id") @db.Uuid
+  providerRefundId String       @map("provider_refund_id") @db.VarChar(100)
+  amount           Decimal      @db.Decimal(10, 2)
+  reason           String       @db.Text
+  status           RefundStatus @default(PENDING)
+  createdAt        DateTime     @default(now()) @map("created_at")
+  updatedAt        DateTime     @updatedAt @map("updated_at")
+
+  // Relations
+  paymentIntent PaymentIntent @relation(fields: [paymentIntentId], references: [id])
+  dispute       Dispute?      @relation(fields: [disputeId], references: [id])
+
+  @@index([paymentIntentId])
+  @@index([disputeId])
+  @@map("refunds")
+}
+
+// ============================================================
+// REVIEWS & DISPUTES
+// ============================================================
+
+model Review {
+  id             String   @id @default(uuid()) @db.Uuid
+  jobId          String   @unique @map("job_id") @db.Uuid
+  customerId     String   @map("customer_id") @db.Uuid
+  professionalId String   @map("professional_id") @db.Uuid
+  rating         Int      @db.SmallInt // 1-5
+  comment        String?  @db.Text
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  job          Job  @relation(fields: [jobId], references: [id])
+  customer     User @relation("CustomerReviews", fields: [customerId], references: [id])
+  professional User @relation("ProfessionalReviews", fields: [professionalId], references: [id])
+
+  @@index([professionalId])
+  @@index([rating])
+  @@map("reviews")
+}
+
+model Dispute {
+  id              String          @id @default(uuid()) @db.Uuid
+  jobId           String          @unique @map("job_id") @db.Uuid
+  openedByUserId  String          @map("opened_by_user_id") @db.Uuid
+  disputeReason   DisputeReason   @map("dispute_reason")
+  description     String          @db.Text
+  status          DisputeStatus   @default(OPENED)
+  resolutionType  ResolutionType? @map("resolution_type")
+  resolutionNotes String?         @map("resolution_notes") @db.Text
+  openedAt        DateTime        @default(now()) @map("opened_at")
+  resolvedAt      DateTime?       @map("resolved_at")
+  createdAt       DateTime        @default(now()) @map("created_at")
+  updatedAt       DateTime        @updatedAt @map("updated_at")
+
+  // Relations
+  job       Job               @relation(fields: [jobId], references: [id])
+  openedBy  User              @relation(fields: [openedByUserId], references: [id])
+  evidences DisputeEvidence[]
+  refunds   Refund[]
+
+  @@index([status])
+  @@index([openedAt])
+  @@map("disputes")
+}
+
+model DisputeEvidence {
+  id               String    @id @default(uuid()) @db.Uuid
+  disputeId        String    @map("dispute_id") @db.Uuid
+  uploadedByUserId String    @map("uploaded_by_user_id") @db.Uuid
+  storageKey       String    @map("storage_key") @db.VarChar(500)
+  mediaType        MediaType @map("media_type")
+  createdAt        DateTime  @default(now()) @map("created_at")
+
+  // Relations
+  dispute    Dispute @relation(fields: [disputeId], references: [id], onDelete: Cascade)
+  uploadedBy User    @relation(fields: [uploadedByUserId], references: [id])
+
+  @@index([disputeId])
+  @@map("dispute_evidences")
+}
+
+// ============================================================
+// AUDIT & SECURITY
+// ============================================================
+
+model AuditLog {
+  id          String   @id @default(uuid()) @db.Uuid
+  actorUserId String?  @map("actor_user_id") @db.Uuid
+  entityType  String   @map("entity_type") @db.VarChar(50)
+  entityId    String   @map("entity_id") @db.Uuid
+  actionType  String   @map("action_type") @db.VarChar(50)
+  oldValue    Json?    @map("old_value")
+  newValue    Json?    @map("new_value")
+  ipAddress   String?  @map("ip_address") @db.VarChar(45)
+  userAgent   String?  @map("user_agent") @db.Text
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  // Relations
+  actor User? @relation(fields: [actorUserId], references: [id], onDelete: SetNull)
+
+  @@index([entityType, entityId])
+  @@index([actorUserId])
+  @@index([actionType])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
+model SecurityEvent {
+  id        String                @id @default(uuid()) @db.Uuid
+  userId    String?               @map("user_id") @db.Uuid
+  eventType String                @map("event_type") @db.VarChar(50)
+  severity  SecurityEventSeverity @default(LOW)
+  metadata  Json
+  createdAt DateTime              @default(now()) @map("created_at")
+
+  // Relations
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([eventType])
+  @@index([severity])
+  @@index([createdAt])
+  @@map("security_events")
+}
+
+// ============================================================
+// PLATFORM CONFIGURATION
+// ============================================================
+
+model PlatformConfig {
+  id        String   @id @default(uuid()) @db.Uuid
+  key       String   @unique @db.VarChar(100)
+  value     Json
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("platform_config")
+}
+
+model ServiceZone {
+  id          String   @id @default(uuid()) @db.Uuid
+  name        String   @db.VarChar(100)
+  postalCodes String[] @map("postal_codes")
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("service_zones")
+}
+
+model PricingRule {
+  id            String     @id @default(uuid()) @db.Uuid
+  tradeType     TradeType  @map("trade_type")
+  urgencyType   UrgencyType @map("urgency_type")
+  basePrice     Decimal    @map("base_price") @db.Decimal(10, 2)
+  pricePerKm    Decimal    @map("price_per_km") @db.Decimal(10, 2)
+  nightSurcharge Decimal   @map("night_surcharge") @db.Decimal(5, 2) // percentage
+  weekendSurcharge Decimal @map("weekend_surcharge") @db.Decimal(5, 2)
+  holidaySurcharge Decimal @map("holiday_surcharge") @db.Decimal(5, 2)
+  vatRate       Decimal    @map("vat_rate") @db.Decimal(5, 2)
+  platformFeeRate Decimal  @map("platform_fee_rate") @db.Decimal(5, 2)
+  isActive      Boolean    @default(true) @map("is_active")
+  createdAt     DateTime   @default(now()) @map("created_at")
+  updatedAt     DateTime   @updatedAt @map("updated_at")
+
+  @@unique([tradeType, urgencyType])
+  @@map("pricing_rules")
+}

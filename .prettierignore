@@ -1,0 +1,32 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+build/
+.next/
+.expo/
+
+# Cache
+.turbo/
+.cache/
+
+# Generated files
+*.generated.ts
+prisma/migrations/
+
+# Lock files
+pnpm-lock.yaml
+package-lock.json
+yarn.lock
+
+# Config files that shouldn't be formatted
+*.min.js
+*.min.css
+
+# Coverage
+coverage/
+
+# IDE
+.idea/
+.vscode/
